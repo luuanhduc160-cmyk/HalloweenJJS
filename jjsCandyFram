@@ -1,0 +1,50 @@
+-- 1. KIỂM TRA FLAG CHỐNG EXECUTE LẠI (Nếu đã chạy rồi thì dừng ngay)
+if _G.CandyJJSLoaded then 
+    return 
+end
+_G.CandyJJSLoaded = true
+
+-- Cấu hình thông tin
+local TARGET_PLACE_ID = 9391468976 -- Place ID của Jujutsu Shenanigans
+local scriptURL = "https://raw.githubusercontent.com/NinjaISINsane/Candy-Limited/refs/heads/main/Jjscandy"
+
+-- 2. TỰ ĐỘNG ĐĂNG KÝ QUEUE CHO LẦN TELEPORT TIẾP THEO
+local function registerTeleportQueue()
+    local queue = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
+    if queue then
+        pcall(function()
+            queue([[
+                repeat task.wait() until game:IsLoaded()
+                -- Kiểm tra lại Place ID sau khi teleport để đảm bảo đúng map JJS
+                if game.PlaceId == 9391468976 then
+                    loadstring(game:HttpGet("https://raw.githubusercontent.com/NinjaISINsane/Candy-Limited/refs/heads/main/Jjscandy"))()
+                end
+            ]])
+        end)
+    end
+end
+
+-- Đăng ký ngay cho đợt chuyển map/game tiếp theo
+registerTeleportQueue()
+
+-- Bắt sự kiện đang Teleport để chắc chắn bơm lại queue
+local Players = game:GetService("Players")
+if Players.LocalPlayer then
+    Players.LocalPlayer.OnTeleport:Connect(function()
+        registerTeleportQueue()
+    end)
+end
+
+-- 3. ĐỢI GAME LOAD VÀ KIỂM TRA PLACE ID TRƯỚC KHI EXECUTE
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+-- Kiểm tra đúng map Jujutsu Shenanigans mới thực thi script
+if game.PlaceId == TARGET_PLACE_ID then
+    pcall(function()
+        loadstring(game:HttpGet(scriptURL))()
+    end)
+else
+    warn("[Candy JJS] Hủy thực thi: Bạn không ở trong map Jujutsu Shenanigans! Place ID hiện tại là: " .. tostring(game.PlaceId))
+end
